@@ -6,6 +6,7 @@ class RecordingController {
     this._recording = []
      this._boundedMessageHandler = null
     this._boundedNavigationHandler = null
+    this._boundedRecordApi= null
     this._boundedWaitHandler = null
     this._badgeState = ''
     this._isPaused = false
@@ -25,8 +26,17 @@ class RecordingController {
       console.debug('listeners connected')
       port.onMessage.addListener(msg => {
         if (msg.action && msg.action === 'start') this.start()
-        if (msg.action && msg.action === 'stop') this.stop()
+        if (msg.action && msg.action === 'stop')
+        {
+           this.FileName = msg.NameFiletext;
+           this.DescName= msg.DescNametext;
+          console.log(msg.NameFiletext, " file textname");
+          console.log(msg.DescNametext, " file textname");
+          this.stop(this.FileName,this.DescName);
+        } 
         if (msg.action && msg.action === 'cleanUp') this.cleanUp()
+        
+        // if (msg.action && msg.action === 'cleanUpatReset') this.cleanUp()
         if (msg.action && msg.action === 'pause') this.pause()
         if (msg.action && msg.action === 'unpause') this.unPause()
       })
@@ -49,12 +59,21 @@ class RecordingController {
       this._boundedMessageHandler = this.handleMessage.bind(this)
 
       this._boundedNavigationHandler = this.handleNavigation.bind(this)
-      this._boundedWaitHandler = this.handleWait.bind(this)
+      this._boundedRecordApi = this.handleRecordApi.bind(this);
+      // this._boundedWaitHandler = this.handleWait.bind(this)
 
       chrome.runtime.onMessage.addListener(this._boundedMessageHandler)
-      chrome.webNavigation.onCompleted.addListener(this._boundedNavigationHandler)
-      chrome.webNavigation.onBeforeNavigate.addListener(this._boundedWaitHandler)
-      this.recordApi();
+      // chrome.webNavigation.onCompleted.addListener(this._boundedNavigationHandler)
+      chrome.webNavigation.onBeforeNavigate.addListener(this._boundedNavigationHandler)
+      chrome.webRequest.onCompleted.addListener(this._boundedRecordApi, 
+        {
+            urls: ["https://*.goibibo.com/*"],
+            types: ["xmlhttprequest"]
+            
+        },
+        ["responseHeaders"]);
+      // this.recordApi();
+
       chrome.browserAction.setIcon({ path: './images/icon-green.png' })
       chrome.browserAction.setBadgeText({ text: this._badgeState })
       chrome.browserAction.setBadgeBackgroundColor({ color: '#FF0000' })
@@ -62,13 +81,23 @@ class RecordingController {
   }
 
   stop () {
-    
+     console.log(this.FileName, "fileeeeeeeeeetextName");
+    let filename = this.FileName;
+    let descname = this.DescName;
     console.debug('stop recording')
+
     this._badgeState = this._recording.length > 0 ? '1' : ''
 
     chrome.runtime.onMessage.removeListener(this._boundedMessageHandler)
-    chrome.webNavigation.onCompleted.removeListener(this._boundedNavigationHandler)
-    chrome.webNavigation.onBeforeNavigate.removeListener(this._boundedWaitHandler)
+    // chrome.webNavigation.onCompleted.removeListener(this._boundedNavigationHandler)
+    chrome.webNavigation.onBeforeNavigate.removeListener(this._boundedNavigationHandler)
+    chrome.webRequest.onCompleted.removeListener(this._boundedRecordApi, 
+      {
+          urls: ["https://*.goibibo.com/*"],
+          types: ["xmlhttprequest"]
+          
+      },
+      ["responseHeaders"]);
 
     chrome.browserAction.setIcon({ path: './images/icon-black.png' })
     chrome.browserAction.setBadgeText({text: this._badgeState})
@@ -82,7 +111,9 @@ class RecordingController {
     xj.setRequestHeader("Content-Type", "application/json");
     xj.send(JSON.stringify({ 
       event: this._recording,
-      script: this.code
+      script: this.code,
+      filename:filename,
+      descname:descname
     }));
     xj.onreadystatechange = function () { 
       if (xj.readyState == 4) { 
@@ -96,7 +127,7 @@ class RecordingController {
     })
 
     // refreshing the extension after every iteration // bug need to solve.
-    chrome.runtime.reload();
+
   }
 
   pause () {
@@ -140,27 +171,27 @@ class RecordingController {
   }
 
   recordNavigation () {
+    console.log('called')
     this.handleMessage({ selector: undefined, value: undefined, action: pptrActions.NAVIGATION })
   }
 
-  recordApi(){
-   var  msge= {};
-    chrome.webRequest.onCompleted.addListener(
-      (details) => {
-         console.log(details.url,'urlscccccccccccccccccccccccccc');
+//   recordApi(){
+//     chrome.webRequest.onCompleted.addListener(
+//       function (details)  {
+//          console.log(details.url,'urlscccccccccccccccccccccccccc');
 
       
-        this.handleMessage({ selector: details.url.split('?')[0], value: undefined, action: pptrActions.RECORD_API })
-          }, 
-      {
-          urls: ["https://*.goibibo.com/*"],
-          types: ["xmlhttprequest"]
+//         this.handleMessage({ selector: details.url.split('?')[0], value: undefined, action: pptrActions.RECORD_API })
+//           }, 
+//       {
+//           urls: ["https://*.goibibo.com/*"],
+//           types: ["xmlhttprequest"]
           
-      },
-      ["responseHeaders"])
+//       },
+//       ["responseHeaders"])
     
     
-}
+// }
 
   handleMessage (msg, sender) {
     if (msg.control) return this.handleControlMessage(msg, sender)
@@ -181,16 +212,30 @@ class RecordingController {
     if (msg.control === 'event-recorder-started') chrome.browserAction.setBadgeText({ text: this._badgeState })
     if (msg.control === 'get-viewport-size') this.recordCurrentViewportSize(msg.coordinates)
     if (msg.control === 'get-current-url') this.recordCurrentUrl(msg.href)
-    if(msg.control === 'record-api') this.recordApi();
+    // if(msg.control === 'record-api') this.recordApi();
   }
 
   handleNavigation ({ frameId }) {
+
+    console.log('called22222' )
+
     console.debug('frameId is:', frameId)
+    console.log('navigation');
     this.injectScript()
-    if (frameId === 0) {
+    if(frameId ===0)
+    {
+      console.log('called11111111' )
       this.recordNavigation()
     }
   }
+
+  handleRecordApi ( details) {
+    console.log(details.url, "api reocrdedededdd");
+    
+    this.handleMessage({ selector: details.url.split('?')[0], value: undefined, action: pptrActions.RECORD_API })
+       
+    
+ }
 
   handleWait () {
     chrome.browserAction.setBadgeText({ text: 'wait' })
@@ -204,4 +249,3 @@ class RecordingController {
 console.debug('booting recording controller')
 window.recordingController = new RecordingController()
 window.recordingController.boot()
-``

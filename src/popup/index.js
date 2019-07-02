@@ -10,7 +10,7 @@ Vue.use(VueClipboard)
 
 Vue.prototype.$chrome = chrome
 
-/* eslint-disable no-new */
+
 new Vue({
   el: '#root',
   render: h => h(App)

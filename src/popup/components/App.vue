@@ -19,11 +19,20 @@
     </div>
     <div class="main">
       <div class="tabs" v-show="!showHelp">
-        <RecordingTab :code="code" :is-recording="isRecording" :live-events="liveEvents" v-show="!showResultsTab"/>
+        <RecordingTab :code="code" :is-recording="isRecording" :live-events="liveEvents"  v-show="!showResultsTab"/>
         <div class="recording-footer" v-show="!showResultsTab">
           <button class="btn btn-sm" @click="toggleRecord" :class="isRecording ? 'btn-danger' : 'btn-primary'">
             {{recordButtonText}}
           </button>
+          <div id = "NameofFile" class="col-lg-12" style="background:#eff9c7;">
+          <input type="text" id="NameFile" v-show="toggle"  v-model="NameFiletext" class="form-control pull-right" style="width:88%;height:25px;margin-top:0px;" placeholder="Enter TestName"  />
+          </div>
+          <div id ="DescofFile"  style="background:#eff9c7;">
+          <input type="text" id="DescName" v-show="toggle"  v-model="DescNametext" class="form-control pull-right" style="width:100%;height:25px;margin-top:0px;" placeholder="Enter Test Desc"  />
+          </div>
+          <!-- <button class="btn btn-sm btn-primary"  @click="reset"  v-show="isRecording">
+            Reset
+          </button> -->
           <button class="btn btn-sm btn-primary btn-outline-primary" @click="togglePause" v-show="isRecording">
             {{pauseButtonText}}
           </button>
@@ -41,6 +50,7 @@
 </template>
 
 <script>
+
   import { version } from '../../../package.json'
   import CodeGenerator from '../../code-generator/CodeGenerator'
   import RecordingTab from './RecordingTab.vue'
@@ -55,6 +65,9 @@ export default {
         code: '',
         showResultsTab: false,
         showHelp: false,
+        toggle : true,
+        NameFiletext:null,
+        DescNametext:null,
         liveEvents: [],
         recording: [],
         isRecording: false,
@@ -67,6 +80,10 @@ export default {
     mounted () {
       this.loadState(() => {
         if (this.isRecording) {
+          console.log(this.liveEvents, " live events");
+          this.toggle = false
+          console.log(this.NameFiletext,"testnameinloadState");
+          console.log(this.DescNametext,"testnameinloadState");
           console.debug('opened in recording state, fetching recording events')
           this.$chrome.storage.local.get(['recording', 'code'], ({ recording }) => {
             console.debug('loaded recording', recording)
@@ -82,13 +99,21 @@ export default {
     },
     methods: {
       toggleRecord () {
+        console.log(this.NameFiletext,"testname1");
+        console.log(this.DescNametext,"testname1");
+
         if (this.isRecording) {
+          
           this.stop()
         } else {
           this.start()
         }
+        console.log(this.NameFiletext,"testname2");
+         console.log(this.DescNametext,"testname2");
         this.isRecording = !this.isRecording
+        
         this.storeState()
+        this.toggle = false
       },
       togglePause () {
         if (this.isPaused) {
@@ -106,8 +131,12 @@ export default {
         this.bus.postMessage({ action: 'start' })
       },
       stop () {
+        console.log(this.NameFiletext, "testNameatstop");
+        console.log(this.DescNametext, "testNameatstop");
+
+
         console.debug('stop recorder')
-        this.bus.postMessage({ action: 'stop' })
+        this.bus.postMessage({ action: 'stop', NameFiletext:this.NameFiletext, DescNametext:this.DescNametext })
 
         this.$chrome.storage.local.get(['recording', 'options'], ({ recording, options }) => {
           console.debug('loaded recording', recording)
@@ -128,13 +157,32 @@ export default {
         })
       },
       restart () {
+        this.NameFiletext=null;
+        this.DescNametext=null;
+        console.log(this.NameFiletext,"NameFileTextat REstart");
+        console.log(this.DescNametext,"NameFileTextat REstart");
+
         console.log('restart')
         this.cleanUp()
         this.bus.postMessage({ action: 'cleanUp' })
       },
+      //   reset () {
+      //   this.NameFiletext=null;
+      //   this.DescNametext=null;
+      //   console.log(this.NameFiletext,"NameFileTextat REstart");
+      //   console.log(this.DescNametext,"NameFileTextat REstart");
+      //    this.cleanUp()
+      //   this.storeState()
+      //   console.log('reset')
+      //   console.log(this.liveEvents, "why is this")
+        
+      //   this.bus.postMessage({ action: 'cleanUpatReset' })
+      // },
       cleanUp () {
         this.recording = this.liveEvents = []
         this.code = ''
+        // console.log('calledCleanupatreset');
+        this.toggle = true
         this.showResultsTab = this.isRecording = this.isPaused = false
         this.storeState()
       },
@@ -149,6 +197,8 @@ export default {
           if (controls) {
             this.isRecording = controls.isRecording
             this.isPaused = controls.isPaused
+            this.NameFiletext=controls.NameFiletext
+            this.DescNametext=controls.DescNametext
           }
 
           if (code) {
@@ -158,11 +208,16 @@ export default {
         })
       },
       storeState () {
+        console.log(this.code, "code.......")
+        console.log(this.isRecording,"recording state");
+        console.log(this.NameFiletext,"namefiletext");
         this.$chrome.storage.local.set({
           code: this.code,
           controls: {
             isRecording: this.isRecording,
-            isPaused: this.isPaused
+            isPaused: this.isPaused,
+            NameFiletext:this.NameFiletext,
+            DescNametext:this.DescNametext
           }
         })
       },
@@ -199,6 +254,14 @@ export default {
   @import "~styles/_animations.scss";
   @import "~styles/_variables.scss";
   @import "~styles/_mixins.scss";
+
+
+  #NameofFile {
+
+    margin-left: 5px;
+
+}
+
 
   .recorder {
     font-size: 14px;
