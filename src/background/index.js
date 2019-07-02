@@ -35,6 +35,7 @@ class RecordingController {
           this.stop(this.FileName,this.DescName);
         } 
         if (msg.action && msg.action === 'cleanUp') this.cleanUp()
+        if(msg.action && msg.action ==='cleanUpAtReset')this.cleanupAtReset()
         
         // if (msg.action && msg.action === 'cleanUpatReset') this.cleanUp()
         if (msg.action && msg.action === 'pause') this.pause()
@@ -135,6 +136,11 @@ class RecordingController {
     this._badgeState = '❚❚'
     chrome.browserAction.setBadgeText({ text: this._badgeState })
     this._isPaused = true
+  }
+
+  cleanupAtReset(){
+    console.log('cleanupatresetcalled');
+    chrome.runtime.reload();
   }
 
   unPause () {

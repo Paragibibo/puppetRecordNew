@@ -19,7 +19,7 @@
     </div>
     <div class="main">
       <div class="tabs" v-show="!showHelp">
-        <RecordingTab :code="code" :is-recording="isRecording" :live-events="liveEvents"  v-show="!showResultsTab"/>
+        <RecordingTab :code="code" :is-recording="isRecording" :live-events="liveEvents" :reset="reset" v-show="!showResultsTab"/>
         <div class="recording-footer" v-show="!showResultsTab">
           <button class="btn btn-sm" @click="toggleRecord" :class="isRecording ? 'btn-danger' : 'btn-primary'">
             {{recordButtonText}}
@@ -28,11 +28,11 @@
           <input type="text" id="NameFile" v-show="toggle"  v-model="NameFiletext" class="form-control pull-right" style="width:88%;height:25px;margin-top:0px;" placeholder="Enter TestName"  />
           </div>
           <div id ="DescofFile"  style="background:#eff9c7;">
-          <input type="text" id="DescName" v-show="toggle"  v-model="DescNametext" class="form-control pull-right" style="width:100%;height:25px;margin-top:0px;" placeholder="Enter Test Desc"  />
+          <input type="text" id="Desc Name" v-show="toggle"  v-model="DescNametext" class="form-control pull-right" style="width:100%;height:25px;margin-top:0px;" placeholder="Enter Test Desc"  />
           </div>
-          <!-- <button class="btn btn-sm btn-primary"  @click="reset"  v-show="isRecording">
+          <button class="btn btn-sm btn-primary"  @click="resetrecord"  v-show="isRecording">
             Reset
-          </button> -->
+          </button>
           <button class="btn btn-sm btn-primary btn-outline-primary" @click="togglePause" v-show="isRecording">
             {{pauseButtonText}}
           </button>
@@ -115,6 +115,18 @@ export default {
         this.storeState()
         this.toggle = false
       },
+      resetrecord()
+      {
+        
+        this.isRecording= false;
+        console.log(this.isRecording,"why sssssssssssssssssssssssssssssss");
+        if(!this.isRecording)
+        {
+          console.log('called');
+          this.reset();
+        }
+        this.storeState()
+      },
       togglePause () {
         if (this.isPaused) {
           this.bus.postMessage({ action: 'unpause' })
@@ -166,18 +178,17 @@ export default {
         this.cleanUp()
         this.bus.postMessage({ action: 'cleanUp' })
       },
-      //   reset () {
-      //   this.NameFiletext=null;
-      //   this.DescNametext=null;
-      //   console.log(this.NameFiletext,"NameFileTextat REstart");
-      //   console.log(this.DescNametext,"NameFileTextat REstart");
-      //    this.cleanUp()
-      //   this.storeState()
-      //   console.log('reset')
-      //   console.log(this.liveEvents, "why is this")
-        
-      //   this.bus.postMessage({ action: 'cleanUpatReset' })
-      // },
+        reset () {
+        this.NameFiletext=null;
+        this.DescNametext=null;
+        this.code = null;
+        console.log(this.NameFiletext,"NameFileTextat REstart");
+        console.log(this.DescNametext,"NameFileTextat REstart");
+        this.cleanUp()
+        this.storeState()
+        console.log('resetiscalledddddddddddddddddddd')
+        this.bus.postMessage({ action: 'cleanUpAtReset' })
+      },
       cleanUp () {
         this.recording = this.liveEvents = []
         this.code = ''
